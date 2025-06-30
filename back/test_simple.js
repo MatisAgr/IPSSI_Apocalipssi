@@ -2,14 +2,22 @@
 const http = require('http');
 
 const simpleTestText = `
-L'intelligence artificielle est une technologie revolutionnaire qui transforme notre facon de vivre et de travailler. 
-Elle permet aux machines d'apprendre, de raisonner et de prendre des decisions de maniere autonome. 
-Dans le domaine de la sante, l'IA aide les medecins a diagnostiquer les maladies plus rapidement et avec plus de precision. 
-En finance, elle detecte les fraudes et optimise les investissements. 
-Dans les transports, elle rend possible la conduite autonome. 
-L'IA transforme egalement l'education en personnalisant l'apprentissage selon les besoins de chaque etudiant. 
-Cependant, elle souleve aussi des questions ethiques importantes concernant l'emploi, la vie privee et la securite. 
-Il est crucial de developper l'IA de maniere responsable pour maximiser ses benefices tout en minimisant les risques.
+Contexte général : Votre client, une start-up spécialisée en solutions d’automatisation pour la veille réglementaire, souhaite lancer rapidement un POC d’un assistant intelligent de synthèse de documents (contrats, rapports, normes). L’idée : l’utilisateur uploade un document PDF et l’outil génère en quelques secondes – à l’aide d’une API LLM pré-entraînée – un résumé structuré, des points clés et des suggestions d’actions. 
+Objectif pédagogique :  
+Mettre en œuvre Scrum pour livrer un prototype fonctionnel en 4 jours, avec un incrément utilisable 
+Tirer parti d’outils de génération de code (Cursor, GitHub Copilot, Bolt) pour accélérer le développement 
+Gérer, chaque jour, 2 incidents imprévus pour simuler un contexte « chaotique » et forcer l’adaptation agile 
+Technologies suggérées :  
+Back-end : Node.js / Python Flask, intégration à une API LLM (OpenAI, Hugging Face) 
+Front-end : React ou Vue.js 
+CI/CD & DevOps : GitHub Actions, Docker 
+Générateurs de code :  
+Le POC pourra être réalisé en s’appuyant sur des générateurs de code assistés par une Intelligence Artificielle Générative (IAG), tels que claude, cursor.com, GitHub Copilot, lovable.dev, bolt.new ou v0.dev 
+Stockage : MongoDB ou PostgreSQL 
+Choix des technos suivant les cours techniques déjà vu et validation des membres de chaque groupe ; ça fait parti des enjeux  
+Environnement d’immersion totale : 
+Les étudiants (B3 et M1) seront répartis en équipes 
+Immergés dans le projet, ils doivent produire des livrables de gestion de projet à intervalles réguliers 
 `;
 
 async function testAPI() {

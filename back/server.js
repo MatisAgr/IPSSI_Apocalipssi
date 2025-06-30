@@ -42,6 +42,13 @@ app.use((err, req, res, next) => {
 // Initialiser l'API Hugging Face
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
+// Configuration du modèle depuis les variables d'environnement
+const MODEL_CONFIG = {
+  name: process.env.HUGGINGFACE_MODEL || 'facebook/bart-large-cnn',
+  maxLength: parseInt(process.env.SUMMARY_MAX_LENGTH) || 150,
+  minLength: parseInt(process.env.SUMMARY_MIN_LENGTH) || 30
+};
+
 // Route de test
 app.get('/', (req, res) => {
   res.json({ message: 'Serveur de résumé de texte opérationnel !' });
@@ -70,11 +77,11 @@ app.post('/api/summarize', async (req, res) => {
 
     // Utiliser le modèle de résumé de Hugging Face
     const summary = await hf.summarization({
-      model: 'facebook/bart-large-cnn',
+      model: MODEL_CONFIG.name,
       inputs: text,
       parameters: {
-        max_length: 150,
-        min_length: 30,
+        max_length: MODEL_CONFIG.maxLength,
+        min_length: MODEL_CONFIG.minLength,
         do_sample: false
       }
     });
@@ -86,7 +93,7 @@ app.post('/api/summarize', async (req, res) => {
       original_length: text.length,
       summary_length: summary.summary_text.length,
       summary: summary.summary_text,
-      model_used: 'facebook/bart-large-cnn'
+      model_used: MODEL_CONFIG.name
     });
 
   } catch (error) {
@@ -116,10 +123,12 @@ app.post('/api/summarize', async (req, res) => {
 // Route pour obtenir des informations sur le modèle
 app.get('/api/model-info', (req, res) => {
   res.json({
-    model: 'facebook/bart-large-cnn',
+    model: MODEL_CONFIG.name,
     description: 'Modèle BART optimisé pour la summarisation de texte',
     max_input_length: 1024,
-    recommended_min_length: 50
+    recommended_min_length: 50,
+    max_summary_length: MODEL_CONFIG.maxLength,
+    min_summary_length: MODEL_CONFIG.minLength
   });
 });
 
@@ -143,6 +152,8 @@ app.use('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
   console.log(`📝 API de résumé disponible sur http://localhost:${PORT}/api/summarize`);
+  console.log(`🤖 Modèle configuré: ${MODEL_CONFIG.name}`);
+  console.log(`📏 Longueur résumé: ${MODEL_CONFIG.minLength}-${MODEL_CONFIG.maxLength} tokens`);
   
   if (!process.env.HUGGINGFACE_API_KEY) {
     console.warn('⚠️  ATTENTION: Clé API Hugging Face manquante. Définissez HUGGINGFACE_API_KEY dans le fichier .env');
