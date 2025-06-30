@@ -10,6 +10,7 @@ import ScrollToTop from "./utils/ScrollToTop";
 // import Navbar from "./components/Navbar/Navbar";
 
 import Home from "./pages/Home";
+import Login from "./pages/Login";
 
 
 // import Page404 from "./pages/Page404";
@@ -32,6 +33,8 @@ export default function App() {
 
             <Route path="/" element={<Home />} />
 
+
+            <Route path="/login" element={<Login />} />
 
             {/* <Route path="/profile" element={
               <ProtectedRoute>
