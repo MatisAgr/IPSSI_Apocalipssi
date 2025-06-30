@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+import Cookies from "js-cookie";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -20,7 +20,7 @@ export default function Login() {
         setError(null);
         try {
             const { data } = await axios.post("http://localhost:3001/api/login", { email, password });
-            localStorage.setItem("token", data.token);
+            Cookies.set("token", data.token);
             navigate("/");
         } catch (err: any) {
             setError(
