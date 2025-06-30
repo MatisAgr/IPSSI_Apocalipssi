@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { HiMail, HiLockClosed, HiExclamationCircle, HiUserAdd } from "react-icons/hi";
+import { HiMail, HiLockClosed, HiExclamationCircle, HiUserAdd, HiEye, HiEyeOff } from "react-icons/hi";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 
 import APP_NAME from "../constants/AppName";
 import { FadeIn } from "../components/animations/FadeIn";
-import { authApi } from "../callApi/authApi";
+import { loginApi } from "../callApi/loginApi";
 
 // TODO: Mettre le cookie en backend
 import Cookies from "js-cookie";
@@ -14,6 +14,7 @@ import Cookies from "js-cookie";
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
@@ -27,7 +28,7 @@ export default function Login() {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await authApi.login({ email, password });
+            const data = await loginApi.login({ email, password });
             Cookies.set("token", data.token);
             navigate("/");
         } catch (err: any) {
@@ -93,13 +94,24 @@ export default function Login() {
                                     </div>
                                     <input
                                         id="password"
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 outline-none"
+                                        className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 outline-none"
                                         required
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPassword ? (
+                                            <HiEyeOff className="h-5 w-5" />
+                                        ) : (
+                                            <HiEye className="h-5 w-5" />
+                                        )}
+                                    </button>
                                 </div>
                             </div>
 
