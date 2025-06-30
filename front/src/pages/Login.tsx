@@ -1,6 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+
+// TODO: Mettre le cookie en backend
 import Cookies from "js-cookie";
 
 export default function Login() {
