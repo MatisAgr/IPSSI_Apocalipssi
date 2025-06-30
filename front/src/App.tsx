@@ -1,47 +1,28 @@
 /////////////////////////////////////////////
-//Dépendances
+// Dépendances
 import { Routes, Route } from "react-router-dom";
 
 /////////////////////////////////////////////
-//Components
+// Components
 import ScrollToTop from "./utils/ScrollToTop";
-// import ProtectedRoute from "./utils/ProtectedRoute";
 
-// import Navbar from "./components/Navbar/Navbar";
-
+// Pages
 import Home from "./pages/Home";
-
-
-// import Page404 from "./pages/Page404";
-// import Notification from "./components/Notification";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
 
 //////////////////////////////////////////////////////////////////////////////////////////
-
 
 export default function App() {
   return (
     <div className="min-h-screen">
-      {/* <Navbar /> */}
-      {/* <Notification /> */}
-
       <div className="flex flex-col flex-grow">
         <ScrollToTop />
         <main className="flex-grow">
           <Routes>
-
-
             <Route path="/" element={<Home />} />
-
-
-            {/* <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } /> */}
-
-
-            {/* <Route path="*" element={<Page404 />} /> */}
-
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
           </Routes>
         </main>
       </div>
