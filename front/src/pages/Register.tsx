@@ -1,36 +1,50 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { HiMail, HiLockClosed, HiExclamationCircle, HiUserAdd, HiEye, HiEyeOff } from "react-icons/hi";
+import { HiMail, HiLockClosed, HiExclamationCircle, HiLogin, HiEye, HiEyeOff, HiUser } from "react-icons/hi";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-
 
 import APP_NAME from "../constants/AppName";
 import { FadeIn } from "../components/animations/FadeIn";
-import { loginApi } from "../callApi/loginApi";
+import { registerApi } from "../callApi/registerApi";
 
-// TODO: Mettre le cookie en backend
-import Cookies from "js-cookie";
-
-export default function Login() {
+export default function Register() {
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmation, setConfirmation] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!email || !password) {
+        
+        if (!username || !email || !password || !confirmation) {
             setError("Veuillez remplir tous les champs");
             return;
         }
+        
+        if (password !== confirmation) {
+            setError("Les mots de passe ne correspondent pas");
+            return;
+        }
+
+        if (password.length < 6) {
+            setError("Le mot de passe doit contenir au moins 6 caractères");
+            return;
+        }
+
         setIsLoading(true);
         setError(null);
+        setSuccess(null);
+        
         try {
-            const data = await loginApi.login({ email, password });
-            Cookies.set("token", data.token);
-            navigate("/");
+            await registerApi.register({ username, email, password });
+            setSuccess("Inscription réussie ! Redirection vers la page de connexion...");
+            setTimeout(() => navigate("/login"), 2000);
         } catch (err: any) {
             setError(err.message || "Une erreur est survenue");
         } finally {
@@ -44,8 +58,8 @@ export default function Login() {
                 <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
                     <FadeIn delay={0.2}>
                         <div className="text-center mb-8">
-                            <h1 className="text-3xl font-bold text-gray-800 mb-2">Connexion</h1>
-                            <p className="text-gray-600">Connectez-vous à votre compte <br /><b>{APP_NAME}</b></p>
+                            <h1 className="text-3xl font-bold text-gray-800 mb-2">Inscription</h1>
+                            <p className="text-gray-600">Créez votre compte <br /><b>{APP_NAME}</b></p>
                         </div>
                     </FadeIn>
 
@@ -63,6 +77,41 @@ export default function Login() {
                                     </div>
                                 </div>
                             )}
+
+                            {success && (
+                                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                                    <div className="flex">
+                                        <div className="flex-shrink-0">
+                                            <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <div className="ml-3">
+                                            {success}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Nom d'utilisateur
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <HiUser className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        id="username"
+                                        type="text"
+                                        placeholder="Votre nom d'utilisateur"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 outline-none"
+                                        required
+                                    />
+                                </div>
+                            </div>
 
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -115,6 +164,37 @@ export default function Login() {
                                 </div>
                             </div>
 
+                            <div>
+                                <label htmlFor="confirmation" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Confirmer le mot de passe
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <HiLockClosed className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        id="confirmation"
+                                        type={showConfirm ? "text" : "password"}
+                                        placeholder="••••••••"
+                                        value={confirmation}
+                                        onChange={(e) => setConfirmation(e.target.value)}
+                                        className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 outline-none"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirm(!showConfirm)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showConfirm ? (
+                                            <HiEyeOff className="h-5 w-5" />
+                                        ) : (
+                                            <HiEye className="h-5 w-5" />
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+
                             <button
                                 type="submit"
                                 disabled={isLoading}
@@ -123,10 +203,10 @@ export default function Login() {
                                 {isLoading ? (
                                     <>
                                         <AiOutlineLoading3Quarters className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
-                                        Connexion en cours...
+                                        Création en cours...
                                     </>
                                 ) : (
-                                    "Se connecter"
+                                    "Créer mon compte"
                                 )}
                             </button>
                         </form>
@@ -135,10 +215,10 @@ export default function Login() {
                     <FadeIn delay={0.6}>
                         <div className="mt-6 text-center">
                             <p className="text-sm text-gray-600 flex items-center justify-center">
-                                Pas encore de compte ?
-                                <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium ml-1 inline-flex items-center">
-                                    <HiUserAdd className="h-5 w-5 mr-1 " />
-                                    Créer un compte
+                                Déjà un compte ?
+                                <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium ml-1 inline-flex items-center">
+                                    <HiLogin className="h-4 w-4 mr-1" />
+                                    Se connecter
                                 </Link>
                             </p>
                         </div>
