@@ -5,11 +5,19 @@ import { Routes, Route } from "react-router-dom";
 /////////////////////////////////////////////
 // Components
 import ScrollToTop from "./utils/ScrollToTop";
+import ProtectedRoute from "./utils/ProtectedRoute";
 
+// import Navbar from "./components/Navbar/Navbar";
+
+/////////////////////////////////////////////
 // Pages
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+
+
+// import Page404 from "./pages/Page404";
+// import Notification from "./components/Notification";
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
@@ -20,9 +28,26 @@ export default function App() {
         <ScrollToTop />
         <main className="flex-grow">
           <Routes>
-            <Route path="/" element={<Home />} />
+
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            } />
+            
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+
+
+            {/* <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } /> */}
+
+
+            {/* <Route path="*" element={<Page404 />} /> */}
+
           </Routes>
         </main>
       </div>
