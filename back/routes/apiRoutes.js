@@ -18,6 +18,8 @@ router.post('/auth/logout', authController.logout);
 
 router.get('/me', authenticate, userController.getProfile);
 router.get('/history', authenticate, userController.getHistory);
+router.put('/update', authenticate, userController.updateUser);
+router.delete('/delete', authenticate, userController.deleteUser); 
 
 router.post('/summarize', summarizeText);
 router.post('/summarize-pdf', upload.single('pdf'), processPDF);

@@ -23,3 +23,57 @@ exports.getHistory = async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 };
+
+exports.updateUser = async (req, res) => {
+  try {
+    const { email,username, newPassword } = req.body;
+    const user = await User.findById(req.userId);
+
+    if (!user) throw new Error('Utilisateur non trouvé');
+
+
+    if (email) user.email = email;
+
+    if (username) user.username = username;
+
+    if (newPassword) {
+      user.password = newPassword; 
+    }
+
+    await user.save();
+
+    // Maj de l'historique
+    await History.create({
+      userId: user._id,
+      action: 'account_update'
+    });
+
+    res.json({ 
+      success: true,
+      message: 'Compte mis à jour',
+      user: { id: user._id, email: user.email }
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.userId);
+    if (!user) throw new Error('Utilisateur non trouvé');
+
+    //effacer l'historique relatif à l'utilisateur
+    await History.deleteMany({ userId: req.userId });
+
+    // nettoyage du cookie
+    res.clearCookie('jwt');
+
+    res.json({ 
+      success: true,
+      message: 'Compte supprimé définitivement'
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
