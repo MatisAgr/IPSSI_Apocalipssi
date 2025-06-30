@@ -5,7 +5,7 @@ import { Routes, Route } from "react-router-dom";
 /////////////////////////////////////////////
 //Components
 import ScrollToTop from "./utils/ScrollToTop";
-// import ProtectedRoute from "./utils/ProtectedRoute";
+import ProtectedRoute from "./utils/ProtectedRoute";
 
 // import Navbar from "./components/Navbar/Navbar";
 
@@ -31,9 +31,11 @@ export default function App() {
           <Routes>
 
 
-            <Route path="/" element={<Home />} />
-
-
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            } />
             <Route path="/login" element={<Login />} />
 
             {/* <Route path="/profile" element={
