@@ -1,4 +1,6 @@
 require('dotenv').config();
+require('./config/db');
+
 const express = require('express');
 const cors = require('cors');
 const apiRoutes = require('./routes/apiRoutes');
@@ -6,6 +8,9 @@ const { handleErrors } = require('./middlewares/errorMiddleware');
 const { MODEL_CONFIG } = require('./config/huggingface');
 
 const app = express();
+
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
 // Middlewares
 app.use(cors({
@@ -20,7 +25,7 @@ app.use('/api', apiRoutes);
 // Gestion des erreurs
 app.use(handleErrors);
 
-// Démarrer le serveur
+// Démarrage du serveur
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   const PDF_MAX_SIZE_MB = parseInt(process.env.PDF_MAX_SIZE_MB) || 10;
