@@ -1,5 +1,6 @@
 const User = require('../models/userModel');
 const History = require('../models/historyModel');
+const {getRoleIdByName} = require('../utils/roleUtils');
 
 exports.getProfile = async (req, res) => {
   try {
@@ -26,11 +27,12 @@ exports.getHistory = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    const { email,username, newPassword } = req.body;
+    const { email,username, newPassword, newRoleName } = req.body;
     const user = await User.findById(req.userId);
 
     if (!user) throw new Error('Utilisateur non trouvé');
 
+    if (!email && !username && !newPassword && !newRoleName) throw new Error('Utilisateur non trouvé');
 
     if (email) user.email = email;
 
@@ -39,6 +41,14 @@ exports.updateUser = async (req, res) => {
     if (newPassword) {
       user.password = newPassword; 
     }
+
+    if (newRoleName) {
+      newRoleId = getRoleIdByName(newRoleName)
+      user.roleId = newRoleId;
+    }
+
+
+    user.updatedAt = Date.now();
 
     await user.save();
 
@@ -73,6 +83,7 @@ exports.deleteUser = async (req, res) => {
       success: true,
       message: 'Compte supprimé définitivement'
     });
+
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
