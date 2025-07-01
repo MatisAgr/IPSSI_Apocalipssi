@@ -9,21 +9,24 @@ export interface RegisterRequest {
 }
 
 export interface RegisterResponse {
-    message: string;
+    success: boolean;
     user?: {
         id: string;
         email: string;
     };
+    error?: string;
 }
 
 export const registerApi = {
     register: async (credentials: RegisterRequest): Promise<RegisterResponse> => {
         try {
-            const { data } = await axios.post<RegisterResponse>(`${API_BASE_URL}/auth/register`, credentials);
+            const { data } = await axios.post<RegisterResponse>(`${API_BASE_URL}/auth/register`, credentials, {
+                withCredentials: true // Important pour les cookies
+            });
             return data;
         } catch (error: any) {
             throw new Error(
-                error.response?.data?.message || "Une erreur est survenue lors de l'inscription"
+                error.response?.data?.error || "Une erreur est survenue lors de l'inscription"
             );
         }
     }

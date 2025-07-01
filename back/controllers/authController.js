@@ -8,8 +8,18 @@ const createToken = (userId) => {
 
 exports.register = async (req, res) => {
   try {
-    const { email,username, password } = req.body;
-    const user = new User({ email,username, password });
+    const { email, username, password } = req.body;
+    
+    // Récupérer l'ID du rôle "user" par défaut
+    const { getRoleIdByName } = require('../utils/roleUtils');
+    const defaultRoleId = await getRoleIdByName('user');
+    
+    const user = new User({ 
+      email, 
+      username, 
+      password,
+      roleId: defaultRoleId 
+    });
     await user.save();
 
     // Création de l'historique

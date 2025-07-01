@@ -3,13 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { HiMail, HiLockClosed, HiExclamationCircle, HiUserAdd, HiEye, HiEyeOff } from "react-icons/hi";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
-
 import APP_NAME from "../constants/AppName";
 import { FadeIn } from "../components/animations/FadeIn";
 import { loginApi } from "../callApi/loginApi";
-
-// TODO: Mettre le cookie en backend
-import Cookies from "js-cookie";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -29,8 +25,11 @@ export default function Login() {
         setError(null);
         try {
             const data = await loginApi.login({ email, password });
-            Cookies.set("token", data.token);
-            navigate("/");
+            if (data.success) {
+                navigate("/");
+            } else {
+                setError(data.error || "Échec de la connexion");
+            }
         } catch (err: any) {
             setError(err.message || "Une erreur est survenue");
         } finally {

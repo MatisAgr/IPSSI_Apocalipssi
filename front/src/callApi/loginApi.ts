@@ -8,22 +8,24 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    token: string;
+    success: boolean;
     user?: {
         id: string;
         email: string;
-        name?: string;
     };
+    error?: string;
 }
 
 export const loginApi = {
     login: async (credentials: LoginRequest): Promise<LoginResponse> => {
         try {
-            const { data } = await axios.post<LoginResponse>(`${API_BASE_URL}/auth/login`, credentials);
+            const { data } = await axios.post<LoginResponse>(`${API_BASE_URL}/auth/login`, credentials, {
+                withCredentials: true // Important pour les cookies
+            });
             return data;
         } catch (error: any) {
             throw new Error(
-                error.response?.data?.message || "Une erreur est survenue lors de la connexion"
+                error.response?.data?.error || "Une erreur est survenue lors de la connexion"
             );
         }
     }

@@ -38,30 +38,21 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    this.password = await bcrypt.hash(this.password, 12);
+  // Hasher le mot de passe s'il a été modifié
+  if (this.isModified('password')) {
+    try {
+      this.password = await bcrypt.hash(this.password, 12);
+      next();
+    } catch (err) {
+      next(err);
+    }
+  } else {
     next();
-  } catch (err) {
-    next(err);
   }
 });
 
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
-
-userSchema.pre('save', async function(next) {
-  if (!this.isNew || this.roleId) return next();
-  
-  try {
-    const { getRoleIdByName } = require('../utils/roleUtils');
-    this.roleId = await getRoleIdByName('user');
-    next();
-  } catch (err) {
-    next(new Error('Impossible de définir le rôle par défaut'));
-  }
-});
 
 module.exports = mongoose.model('User', userSchema);
