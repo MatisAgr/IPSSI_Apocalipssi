@@ -19,7 +19,7 @@ export interface RegisterResponse {
 export const registerApi = {
     register: async (credentials: RegisterRequest): Promise<RegisterResponse> => {
         try {
-            const { data } = await axios.post<RegisterResponse>(`${API_BASE_URL}/register`, credentials);
+            const { data } = await axios.post<RegisterResponse>(`${API_BASE_URL}/auth/register`, credentials);
             return data;
         } catch (error: any) {
             throw new Error(
