@@ -6,6 +6,7 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import APP_NAME from "../constants/AppName";
 import { FadeIn } from "../components/animations/FadeIn";
 import { registerApi } from "../callApi/registerApi";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Register() {
     const [username, setUsername] = useState("");
@@ -18,6 +19,7 @@ export default function Register() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const navigate = useNavigate();
+    const { setUser } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -42,9 +44,14 @@ export default function Register() {
         setSuccess(null);
         
         try {
-            await registerApi.register({ username, email, password });
-            setSuccess("Inscription réussie ! Redirection vers la page de connexion...");
-            setTimeout(() => navigate("/login"), 2000);
+            const data = await registerApi.register({ username, email, password });
+            if (data.success && data.user) {
+                setUser(data.user);
+                setSuccess("Inscription réussie ! Redirection...");
+                setTimeout(() => navigate("/"), 2000);
+            } else {
+                setError(data.error || "Échec de l'inscription");
+            }
         } catch (err: any) {
             setError(err.message || "Une erreur est survenue");
         } finally {

@@ -12,6 +12,7 @@ export interface LoginResponse {
     user?: {
         id: string;
         email: string;
+        username: string;
     };
     error?: string;
 }

@@ -6,6 +6,7 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import APP_NAME from "../constants/AppName";
 import { FadeIn } from "../components/animations/FadeIn";
 import { loginApi } from "../callApi/loginApi";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
+    const { setUser } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -25,7 +27,8 @@ export default function Login() {
         setError(null);
         try {
             const data = await loginApi.login({ email, password });
-            if (data.success) {
+            if (data.success && data.user) {
+                setUser(data.user);
                 navigate("/");
             } else {
                 setError(data.error || "Échec de la connexion");
