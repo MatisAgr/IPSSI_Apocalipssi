@@ -36,7 +36,7 @@ exports.register = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
     });
 
-    res.status(201).json({ success: true, user: { id: user._id, email } });
+    res.status(201).json({ success: true, user: { id: user._id, email, username } });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
@@ -69,7 +69,7 @@ exports.login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    res.json({ success: true, user: { id: user._id, email } });
+    res.json({ success: true, user: { id: user._id, email: user.email, username: user.username } });
   } catch (err) {
     res.status(401).json({ success: false, error: err.message });
   }
@@ -78,4 +78,24 @@ exports.login = async (req, res) => {
 exports.logout = (req, res) => {
   res.clearCookie('jwt');
   res.json({ success: true, message: "Déconnecté avec succès" });
+};
+
+exports.getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ success: false, error: "Utilisateur non trouvé" });
+    }
+    
+    res.json({ 
+      success: true, 
+      user: { 
+        id: user._id, 
+        email: user.email, 
+        username: user.username 
+      } 
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 };

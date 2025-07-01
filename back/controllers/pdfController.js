@@ -1,5 +1,6 @@
 const { extractTextFromPDF } = require('../services/pdfService');
 const { summarizeText } = require('../services/ollamaService');
+const History = require('../models/historyModel');
 
 exports.processPDF = async (req, res, next) => {
   try {
@@ -20,6 +21,21 @@ exports.processPDF = async (req, res, next) => {
     }
 
     const summary = await summarizeText(extractedText);
+
+    // Sauvegarder l'historique avec le résumé
+    if (req.userId) {
+      await History.create({
+        userId: req.userId,
+        action: 'pdf_summarized',
+        resume: summary,
+        metadata: {
+          filename: req.file.originalname,
+          fileSize: req.file.size,
+          extractedTextLength: extractedText.length,
+          summaryLength: summary.length
+        }
+      });
+    }
 
     res.json({
       success: true,
