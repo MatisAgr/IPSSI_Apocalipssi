@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import axios from 'axios';
 import APP_NAME from '../constants/AppName';
-import { FaReact, FaFilePdf, FaUpload, FaSpinner, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { FaReact, FaFilePdf, FaUpload, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaClock, FaPercentage } from 'react-icons/fa';
 
 interface SummaryResponse {
   success: boolean;
-  filename: string;
-  file_size: number;
-  extracted_text_length: number;
+  filename?: string; // Optionnel pour le texte simple
+  file_size?: number; // Optionnel pour le texte simple
+  extracted_text_length?: number; // Pour PDF
+  original_length?: number; // Pour texte simple
   summary_length: number;
   summary: string;
   model_used: string;
@@ -20,10 +21,46 @@ interface ErrorResponse {
 
 export default function Home() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [textInput, setTextInput] = useState<string>('');
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Fonction pour calculer le temps gagné
+  const calculateTimeSaved = (originalLength: number, summaryLength: number) => {
+    const avgReadingSpeed = 200; // mots par minute
+    const avgCharsPerWord = 5; // caractères par mot en moyenne
+    
+    const originalWords = originalLength / avgCharsPerWord;
+    const summaryWords = summaryLength / avgCharsPerWord;
+    
+    const originalReadingTime = originalWords / avgReadingSpeed; // en minutes
+    const summaryReadingTime = summaryWords / avgReadingSpeed; // en minutes
+    
+    const timeSaved = originalReadingTime - summaryReadingTime; // en minutes
+    const compressionRatio = ((originalLength - summaryLength) / originalLength) * 100;
+    
+    return {
+      originalTime: originalReadingTime,
+      summaryTime: summaryReadingTime,
+      timeSaved: timeSaved,
+      compressionRatio: compressionRatio
+    };
+  };
+
+  // Fonction pour formater le temps en minutes/heures
+  const formatTime = (minutes: number) => {
+    if (minutes < 1) {
+      return `${Math.round(minutes * 60)} secondes`;
+    } else if (minutes < 60) {
+      return `${Math.round(minutes)} minutes`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = Math.round(minutes % 60);
+      return `${hours}h ${remainingMinutes}min`;
+    }
+  };
 
   // Gestion du drag & drop
   const handleDragOver = (e: React.DragEvent) => {
@@ -81,6 +118,7 @@ export default function Home() {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
+          withCredentials: true,
         }
       );
 
@@ -97,9 +135,46 @@ export default function Home() {
     }
   };
 
+  // Résumé de texte simple
+  const handleTextSummary = async () => {
+    if (!textInput.trim() || textInput.length < 50) {
+      setError('Le texte doit contenir au moins 50 caractères');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setSummary(null);
+
+    try {
+      const response = await axios.post<SummaryResponse>(
+        'http://localhost:3001/api/summarize',
+        { text: textInput },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
+        }
+      );
+
+      setSummary(response.data);
+    } catch (err: any) {
+      if (err.response?.data) {
+        const errorData: ErrorResponse = err.response.data;
+        setError(`${errorData.error}: ${errorData.message}`);
+      } else {
+        setError('Une erreur est survenue lors du résumé du texte');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Reset de l'interface
   const handleReset = () => {
     setSelectedFile(null);
+    setTextInput('');
     setSummary(null);
     setError(null);
   };
@@ -118,7 +193,61 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Zone d'upload */}
+        {/* Zone de résumé de texte */}
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+            <FaReact className="text-blue-500" />
+            Résumé de texte
+          </h2>
+
+          <div className="space-y-4">
+            <textarea
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              placeholder="Collez votre texte ici pour obtenir un résumé automatique... (minimum 50 caractères)"
+              className="w-full h-40 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 outline-none resize-vertical"
+            />
+            
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-500">
+                Caractères: {textInput.length} {textInput.length < 50 && textInput.length > 0 && (
+                  <span className="text-red-500">(minimum 50 requis)</span>
+                )}
+              </p>
+              
+              <div className="flex gap-2">
+                <button
+                  onClick={handleTextSummary}
+                  disabled={isLoading || textInput.length < 50}
+                  className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <FaSpinner className="animate-spin" />
+                      Résumé en cours...
+                    </>
+                  ) : (
+                    <>
+                      <FaReact />
+                      Résumer le texte
+                    </>
+                  )}
+                </button>
+                
+                {textInput && (
+                  <button
+                    onClick={() => setTextInput('')}
+                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                  >
+                    Effacer
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Zone d'upload PDF */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
             <FaFilePdf className="text-red-500" />
@@ -221,15 +350,17 @@ export default function Home() {
             </div>
 
             {/* Statistiques */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Fichier</p>
-                <p className="font-semibold text-blue-700">{summary.filename}</p>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {summary.filename && (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600">Fichier</p>
+                  <p className="font-semibold text-blue-700">{summary.filename}</p>
+                </div>
+              )}
               <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Texte extrait</p>
+                <p className="text-sm text-gray-600">Texte original</p>
                 <p className="font-semibold text-green-700">
-                  {summary.extracted_text_length.toLocaleString()} caractères
+                  {(summary.extracted_text_length || summary.original_length || 0).toLocaleString()} caractères
                 </p>
               </div>
               <div className="bg-purple-50 p-4 rounded-lg">
@@ -237,6 +368,55 @@ export default function Home() {
                 <p className="font-semibold text-purple-700">
                   {summary.summary_length} caractères
                 </p>
+              </div>
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <FaClock className="text-orange-600" />
+                  <p className="text-sm text-gray-600">Temps gagné</p>
+                </div>
+                <p className="font-semibold text-orange-700">
+                  {formatTime(calculateTimeSaved(
+                    summary.extracted_text_length || summary.original_length || 0, 
+                    summary.summary_length
+                  ).timeSaved)}
+                </p>
+              </div>
+            </div>
+
+            {/* Statistiques détaillées */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <FaPercentage className="text-blue-600" />
+                Analyse de compression
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatTime(calculateTimeSaved(
+                      summary.extracted_text_length || summary.original_length || 0, 
+                      summary.summary_length
+                    ).originalTime)}
+                  </p>
+                  <p className="text-sm text-gray-600">Temps de lecture original</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-600">
+                    {formatTime(calculateTimeSaved(
+                      summary.extracted_text_length || summary.original_length || 0, 
+                      summary.summary_length
+                    ).summaryTime)}
+                  </p>
+                  <p className="text-sm text-gray-600">Temps de lecture du résumé</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">
+                    {calculateTimeSaved(
+                      summary.extracted_text_length || summary.original_length || 0, 
+                      summary.summary_length
+                    ).compressionRatio.toFixed(1)}%
+                  </p>
+                  <p className="text-sm text-gray-600">Taux de compression</p>
+                </div>
               </div>
             </div>
 
@@ -249,7 +429,9 @@ export default function Home() {
             {/* Informations techniques */}
             <div className="mt-6 text-sm text-gray-500">
               <p>Modèle utilisé : {summary.model_used}</p>
-              <p>Taille du fichier : {(summary.file_size / (1024 * 1024)).toFixed(2)} MB</p>
+              {summary.file_size && (
+                <p>Taille du fichier : {(summary.file_size / (1024 * 1024)).toFixed(2)} MB</p>
+              )}
             </div>
           </div>
         )}
