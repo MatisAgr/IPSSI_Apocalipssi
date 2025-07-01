@@ -6,6 +6,7 @@ import { Routes, Route } from "react-router-dom";
 // Components
 import ScrollToTop from "./utils/ScrollToTop";
 import ProtectedRoute from "./utils/ProtectedRoute";
+import Cookies from "js-cookie";
 
 // import Navbar from "./components/Navbar/Navbar";
 
@@ -14,7 +15,7 @@ import ProtectedRoute from "./utils/ProtectedRoute";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
-
+import NavBar from "./components/NavBar";
 
 // import Page404 from "./pages/Page404";
 // import Notification from "./components/Notification";
@@ -22,8 +23,12 @@ import Login from "./pages/Login";
 //////////////////////////////////////////////////////////////////////////////////////////
 
 export default function App() {
+
+  const isLoggedIn = Boolean(Cookies.get("token"));
+
   return (
     <div className="min-h-screen">
+      {isLoggedIn && <NavBar />}
       <div className="flex flex-col flex-grow">
         <ScrollToTop />
         <main className="flex-grow">
