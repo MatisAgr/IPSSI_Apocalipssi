@@ -9,7 +9,7 @@ const {
 } = require('../controllers/pdfController');
 const { authenticate } = require('../middlewares/authMiddleware');
 const { historyAction } = require('../middlewares/historyMiddleware');
-const { logAction } = require('../middlewares/logMiddleware');
+const { auditLog } = require('../middlewares/logMiddleware');
 const authController = require('../controllers/authController');
 const userController = require('../controllers/userController');
 
@@ -17,13 +17,13 @@ router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
 router.post('/auth/logout', authController.logout);
 
-router.get('/me', authenticate,logAction, userController.getProfile);
-router.get('/history', authenticate,logAction, userController.getHistory);
-router.put('/update', authenticate,logAction, userController.updateUser);
-router.delete('/delete', authenticate,logAction, userController.deleteUser); 
+router.get('/me', authenticate,auditLog, userController.getProfile);
+router.get('/history', authenticate,auditLog, userController.getHistory);
+router.put('/update', authenticate,auditLog, userController.updateUser);
+router.delete('/delete', authenticate,auditLog, userController.deleteUser); 
 
-router.post('/summarize',historyAction('pdf_upload'),logAction, summarizeText);
-router.post('/summarize-pdf',historyAction('text_summary'),logAction, upload.single('pdf'), processPDF);
+router.post('/summarize',historyAction('text_summary'),auditLog, summarizeText);
+router.post('/summarize-pdf',historyAction('pdf_upload'),auditLog, upload.single('pdf'), processPDF);
 
 router.get('/model-info', (req, res) => {
   res.json({
