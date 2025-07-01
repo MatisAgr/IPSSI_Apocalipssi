@@ -1,5 +1,5 @@
 const { extractTextFromPDF } = require('../services/pdfService');
-const { summarizeText } = require('../services/huggingfaceService');
+const { summarizeText } = require('../services/ollamaService');
 
 exports.processPDF = async (req, res, next) => {
   try {
@@ -24,9 +24,11 @@ exports.processPDF = async (req, res, next) => {
     res.json({
       success: true,
       filename: req.file.originalname,
+      file_size: req.file.size,
       extracted_text_length: extractedText.length,
+      summary_length: summary.length,
       summary,
-      model_used: process.env.HUGGINGFACE_MODEL
+      model_used: process.env.OLLAMA_MODEL || 'llama3.2:3b'
     });
 
   } catch (error) {

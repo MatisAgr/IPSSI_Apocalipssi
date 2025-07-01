@@ -1,4 +1,4 @@
-const { summarizeText } = require('../services/huggingfaceService');
+const { summarizeText } = require('../services/ollamaService');
 
 exports.summarizeText = async (req, res, next) => {
   try {
@@ -16,8 +16,9 @@ exports.summarizeText = async (req, res, next) => {
     res.json({
       success: true,
       original_length: text.length,
+      summary_length: summary.length,
       summary,
-      model_used: process.env.HUGGINGFACE_MODEL
+      model_used: process.env.OLLAMA_MODEL
     });
 
   } catch (error) {

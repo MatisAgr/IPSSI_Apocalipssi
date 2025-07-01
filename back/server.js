@@ -5,7 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const apiRoutes = require('./routes/apiRoutes');
 const { handleErrors } = require('./middlewares/errorMiddleware');
-const { MODEL_CONFIG } = require('./config/huggingface');
+const { OLLAMA_CONFIG } = require('./config/ollama');
 
 const app = express();
 
@@ -14,7 +14,7 @@ app.use(cookieParser());
 
 // Middlewares
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -33,11 +33,10 @@ app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
   console.log(`📝 API de résumé disponible sur http://localhost:${PORT}/api/summarize`);
   console.log(`📄 API de résumé PDF disponible sur http://localhost:${PORT}/api/summarize-pdf`);
-  console.log(`🤖 Modèle configuré: ${MODEL_CONFIG.name}`);
-  console.log(`📏 Longueur résumé: ${MODEL_CONFIG.minLength}-${MODEL_CONFIG.maxLength} tokens`);
+  console.log(`🤖 Modèle Ollama configuré: ${OLLAMA_CONFIG.model}`);
+  console.log(`🌡️ Température: ${OLLAMA_CONFIG.temperature}`);
+  console.log(`📏 Tokens max: ${OLLAMA_CONFIG.maxTokens}`);
   console.log(`📎 Taille max PDF: ${PDF_MAX_SIZE_MB}MB`);
+  console.log(`🔗 Ollama URL: ${OLLAMA_CONFIG.baseURL}`);
   
-  if (!process.env.HUGGINGFACE_API_KEY) {
-    console.warn('⚠️  ATTENTION: Clé API Hugging Face manquante. Définissez HUGGINGFACE_API_KEY dans le fichier .env');
-  }
 });
