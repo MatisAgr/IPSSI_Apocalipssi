@@ -1,6 +1,8 @@
 const { extractTextFromPDF } = require('../services/pdfService');
 const { summarizeText } = require('../services/ollamaService');
 const History = require('../models/historyModel');
+const Keywords = require('../models/keywordsModel');
+const { extractKeywords } = require('../utils/keywords')
 
 exports.processPDF = async (req, res, next) => {
   try {
@@ -21,6 +23,7 @@ exports.processPDF = async (req, res, next) => {
     }
 
     const summary = await summarizeText(extractedText);
+    const keywordsList = extractKeywords(summary)
 
     // Sauvegarder l'historique avec le résumé
     if (req.userId) {
@@ -37,6 +40,21 @@ exports.processPDF = async (req, res, next) => {
       });
     }
 
+    // Sauvegarder les mots clés
+    if (req.userId) {
+      await Keywords.create({
+        userId: req.userId,
+        keywords : keywordsList,
+        metadata: {
+          filename: req.file.originalname,
+          fileSize: req.file.size,
+          extractedTextLength: extractedText.length,
+          summaryLength: summary.length
+        }
+      });
+    }
+    
+
     res.json({
       success: true,
       filename: req.file.originalname,
@@ -44,6 +62,7 @@ exports.processPDF = async (req, res, next) => {
       extracted_text_length: extractedText.length,
       summary_length: summary.length,
       summary,
+      keywords : keywordsList,
       model_used: process.env.OLLAMA_MODEL || 'llama3.2:3b'
     });
 
