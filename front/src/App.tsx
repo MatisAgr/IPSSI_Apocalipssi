@@ -13,6 +13,7 @@ import { AuthProvider, useAuth } from "./hooks/useAuth";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 import NavBar from "./components/NavBar";
 
 // import Page404 from "./pages/Page404";
@@ -57,11 +58,11 @@ function AppContent() {
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
 
-            {/* <Route path="/profile" element={
+            <Route path="/profil" element={
               <ProtectedRoute>
                 <Profile />
               </ProtectedRoute>
-            } /> */}
+            } />
 
             {/* <Route path="*" element={<Page404 />} /> */}
           </Routes>
