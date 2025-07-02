@@ -27,7 +27,20 @@ app.use(handleErrors);
 
 // Démarrage du serveur
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+
+// Fonction d'initialisation
+async function initializeServer() {
+  try {
+    // Initialiser les rôles par défaut
+    const { initDefaultRoles } = require('./manage_roles');
+    await initDefaultRoles();
+    console.log('✅ Rôles par défaut initialisés');
+  } catch (error) {
+    console.error('⚠️ Erreur lors de l\'initialisation des rôles:', error);
+  }
+}
+
+app.listen(PORT, async () => {
   const PDF_MAX_SIZE_MB = parseInt(process.env.PDF_MAX_SIZE_MB) || 10;
   
   console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
@@ -39,4 +52,6 @@ app.listen(PORT, () => {
   console.log(`📎 Taille max PDF: ${PDF_MAX_SIZE_MB}MB`);
   console.log(`🔗 Ollama URL: ${OLLAMA_CONFIG.baseURL}`);
   
+  // Initialiser après le démarrage du serveur
+  await initializeServer();
 });

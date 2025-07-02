@@ -7,7 +7,14 @@ exports.getProfile = async (req, res) => {
     const user = await User.findById(req.userId).select('-password');
     if (!user) throw new Error("Utilisateur non trouvé");
 
-    res.json({ success: true, user });
+    res.json({ 
+      success: true, 
+      user: {
+        ...user.toObject(),
+        email: user.getDecryptedEmail(),
+        username: user.getDecryptedUsername()
+      }
+    });
   } catch (err) {
     res.status(404).json({ success: false, error: err.message });
   }
@@ -27,26 +34,39 @@ exports.getHistory = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    const { email,username, newPassword, newRoleName } = req.body;
+    const { email, username, newPassword, newRoleName } = req.body;
     const user = await User.findById(req.userId);
 
     if (!user) throw new Error('Utilisateur non trouvé');
 
-    if (!email && !username && !newPassword && !newRoleName) throw new Error('Utilisateur non trouvé');
+    if (!email && !username && !newPassword && !newRoleName) throw new Error('Aucune donnée à mettre à jour');
 
-    if (email) user.email = email;
+    // Vérifier l'unicité de l'email si modifié
+    if (email && email !== user.getDecryptedEmail()) {
+      const existingUserByEmail = await User.findByEmail(email);
+      if (existingUserByEmail && existingUserByEmail._id.toString() !== user._id.toString()) {
+        throw new Error('Cet email est déjà utilisé');
+      }
+      user.email = email;
+    }
 
-    if (username) user.username = username;
+    // Vérifier l'unicité du username si modifié
+    if (username && username !== user.getDecryptedUsername()) {
+      const existingUserByUsername = await User.findByUsername(username);
+      if (existingUserByUsername && existingUserByUsername._id.toString() !== user._id.toString()) {
+        throw new Error('Ce nom d\'utilisateur est déjà utilisé');
+      }
+      user.username = username;
+    }
 
     if (newPassword) {
       user.password = newPassword; 
     }
 
     if (newRoleName) {
-      newRoleId = getRoleIdByName(newRoleName)
+      const newRoleId = await getRoleIdByName(newRoleName);
       user.roleId = newRoleId;
     }
-
 
     user.updatedAt = Date.now();
 
@@ -61,7 +81,11 @@ exports.updateUser = async (req, res) => {
     res.json({ 
       success: true,
       message: 'Compte mis à jour',
-      user: { id: user._id, email: user.email }
+      user: { 
+        id: user._id, 
+        email: user.getDecryptedEmail(), 
+        username: user.getDecryptedUsername() 
+      }
     });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });

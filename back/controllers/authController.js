@@ -10,6 +10,17 @@ exports.register = async (req, res) => {
   try {
     const { email, username, password } = req.body;
     
+    // Vérifier si l'email ou le username existent déjà
+    const existingUserByEmail = await User.findByEmail(email);
+    if (existingUserByEmail) {
+      throw new Error("Cet email est déjà utilisé");
+    }
+    
+    const existingUserByUsername = await User.findByUsername(username);
+    if (existingUserByUsername) {
+      throw new Error("Ce nom d'utilisateur est déjà utilisé");
+    }
+    
     // Récupérer l'ID du rôle "user" par défaut
     const { getRoleIdByName } = require('../utils/roleUtils');
     const defaultRoleId = await getRoleIdByName('user');
@@ -36,7 +47,14 @@ exports.register = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
     });
 
-    res.status(201).json({ success: true, user: { id: user._id, email, username } });
+    res.status(201).json({ 
+      success: true, 
+      user: { 
+        id: user._id, 
+        email: user.getDecryptedEmail(), 
+        username: user.getDecryptedUsername() 
+      } 
+    });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
@@ -45,7 +63,7 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findByEmailOrUsername(email); // Permet login avec email ou username
     if (!user) throw new Error("Identifiants invalides");
 
     const isMatch = await user.comparePassword(password);
@@ -69,7 +87,14 @@ exports.login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    res.json({ success: true, user: { id: user._id, email: user.email, username: user.username } });
+    res.json({ 
+      success: true, 
+      user: { 
+        id: user._id, 
+        email: user.getDecryptedEmail(), 
+        username: user.getDecryptedUsername() 
+      } 
+    });
   } catch (err) {
     res.status(401).json({ success: false, error: err.message });
   }
@@ -91,8 +116,8 @@ exports.getMe = async (req, res) => {
       success: true, 
       user: { 
         id: user._id, 
-        email: user.email, 
-        username: user.username 
+        email: user.getDecryptedEmail(), 
+        username: user.getDecryptedUsername() 
       } 
     });
   } catch (err) {
