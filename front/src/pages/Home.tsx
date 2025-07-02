@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import axios from 'axios';
 import APP_NAME from '../constants/AppName';
-import { FaFilePdf, FaUpload, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaClock, FaPercentage } from 'react-icons/fa';
+import jsPDF from 'jspdf';
+import { FaFilePdf, FaUpload, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaClock, FaPercentage, FaCopy, FaDownload } from 'react-icons/fa';
 
 interface SummaryResponse {
   success: boolean;
@@ -23,6 +24,7 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
+  const [summaryCopied, setSummaryCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Fonction pour calculer le temps gagné
@@ -97,6 +99,28 @@ export default function Home() {
     }
   };
 
+  // Copier le résumé
+  const copySummary = (summary: string) => {
+    navigator.clipboard.writeText(summary);
+    setSummaryCopied(true);
+    setTimeout(() => {
+      setSummaryCopied(false);
+    }, 2000);
+  };
+
+  // Télécharger le résumé
+  const downloadSummary = (summary: string) => {
+    const doc = new jsPDF();
+    const margin = 10;
+    const width = doc.internal.pageSize.getWidth();
+    const maxTextWidth = width - margin * 2;
+    
+    const wrappedText = doc.splitTextToSize(summary, maxTextWidth);
+
+    doc.text(wrappedText, margin, 20);
+    doc.save('summary.pdf');
+  };
+
   // Upload et résumé du PDF
   const handleUpload = async () => {
     if (!selectedFile) return;
@@ -146,11 +170,10 @@ export default function Home() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
-            <FaFilePdf className="text-red-500" />
-            {APP_NAME}
+            <h1 className="text-black-500">Résumé de documents PDF avec IA</h1>
           </h1>
           <p className="text-lg text-gray-600">
-            Résumé automatique de documents PDF avec IA
+            Ne perdez plus de temps à lire des documents longs.
           </p>
         </div>
 
@@ -329,7 +352,17 @@ export default function Home() {
 
             {/* Résumé */}
             <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Résumé du document</h3>
+              <div className="header-summary flex items-start justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Résumé du document</h3>
+                <div className="actions-container flex items-center gap-2">
+                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200" onClick={() => copySummary(summary.summary)}>
+                    {summaryCopied ? <FaCheckCircle /> : <FaCopy />}
+                  </button>
+                  <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200" onClick={() => downloadSummary(summary.summary)}>
+                    <FaDownload />
+                  </button>
+                </div>
+              </div>
               <p className="text-gray-700 leading-relaxed">{summary.summary}</p>
             </div>
 
