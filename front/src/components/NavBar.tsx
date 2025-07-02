@@ -1,8 +1,8 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { FaUser, FaFilePdf, FaSignOutAlt } from "react-icons/fa";
 import { useAuth } from "../hooks/useAuth";
+import logo from "../assets/logo.svg";
 import axios from "axios";
-import APP_NAME from "../constants/AppName";
 
 export default function NavBar() {
     const { user, setUser } = useAuth();
@@ -33,8 +33,7 @@ export default function NavBar() {
                             to="/" 
                             className="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors duration-200 flex items-center gap-2"
                         >
-                            <FaFilePdf className="text-blue-500" />
-                            {APP_NAME}
+                            <img src={logo} alt="Logo" className="w-40" />
                         </NavLink>
                     </div>
                     <div className="flex items-center space-x-1">
