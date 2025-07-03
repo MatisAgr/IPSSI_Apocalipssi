@@ -26,7 +26,13 @@ exports.getHistory = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(50);
 
-    res.json({ success: true, history });
+    // Retourner l'historique avec les résumés et métadonnées
+    const cleanedHistory = history.map(entry => {
+      const cleaned = entry.toObject();
+      return cleaned;
+    });
+
+    res.json({ success: true, history: cleanedHistory });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

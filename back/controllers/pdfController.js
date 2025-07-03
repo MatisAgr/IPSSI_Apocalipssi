@@ -35,7 +35,8 @@ exports.processPDF = async (req, res, next) => {
           filename: req.file.originalname,
           fileSize: req.file.size,
           extractedTextLength: extractedText.length,
-          summaryLength: summary.length
+          summaryLength: summary.length,
+          type: 'pdf'
         }
       });
     }

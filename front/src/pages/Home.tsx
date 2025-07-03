@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import axios from 'axios';
-import APP_NAME from '../constants/AppName';
 import jsPDF from 'jspdf';
-import { FaFilePdf, FaUpload, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaClock, FaPercentage, FaCopy, FaDownload } from 'react-icons/fa';
+import { FaFilePdf, FaUpload, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaClock, FaPercentage, FaCopy, FaDownload, FaFileAlt } from 'react-icons/fa';
 
 interface SummaryResponse {
   success: boolean;
-  filename: string;
-  file_size: number;
-  extracted_text_length: number;
+  filename?: string;
+  file_size?: number;
+  extracted_text_length?: number;
+  original_length?: number;
   summary_length: number;
   summary: string;
   model_used: string;
@@ -26,6 +26,8 @@ export default function Home() {
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [summaryCopied, setSummaryCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inputMode, setInputMode] = useState<'pdf' | 'text'>('pdf');
+  const [textInput, setTextInput] = useState<string>('');
 
   // Fonction pour calculer le temps gagné
   const calculateTimeSaved = (originalLength: number, summaryLength: number) => {
@@ -121,28 +123,44 @@ export default function Home() {
     doc.save('summary.pdf');
   };
 
-  // Upload et résumé du PDF
-  const handleUpload = async () => {
-    if (!selectedFile) return;
+  // Upload et résumé du PDF ou du texte
+  const handleSubmit = async () => {
+    if (inputMode === 'pdf' && !selectedFile) return;
+    if (inputMode === 'text' && !textInput.trim()) return;
 
     setIsLoading(true);
     setError(null);
     setSummary(null);
 
-    const formData = new FormData();
-    formData.append('pdf', selectedFile);
-
     try {
-      const response = await axios.post<SummaryResponse>(
-        'http://localhost:3001/api/summarize-pdf',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          withCredentials: true,
-        }
-      );
+      let response;
+      
+      if (inputMode === 'pdf') {
+        const formData = new FormData();
+        formData.append('pdf', selectedFile!);
+
+        response = await axios.post<SummaryResponse>(
+          'http://localhost:3001/api/summarize-pdf',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+            withCredentials: true,
+          }
+        );
+      } else {
+        response = await axios.post<SummaryResponse>(
+          'http://localhost:3001/api/summarize',
+          { text: textInput },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            withCredentials: true,
+          }
+        );
+      }
 
       setSummary(response.data);
     } catch (err: any) {
@@ -150,7 +168,7 @@ export default function Home() {
         const errorData: ErrorResponse = err.response.data;
         setError(`${errorData.error}: ${errorData.message}`);
       } else {
-        setError('Une erreur est survenue lors de l\'upload du fichier');
+        setError('Une erreur est survenue lors du traitement');
       }
     } finally {
       setIsLoading(false);
@@ -160,6 +178,7 @@ export default function Home() {
   // Reset de l'interface
   const handleReset = () => {
     setSelectedFile(null);
+    setTextInput('');
     setSummary(null);
     setError(null);
   };
@@ -177,86 +196,170 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Zone d'upload PDF */}
+        {/* Zone d'upload PDF ou texte */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-            <FaFilePdf className="text-red-500" />
-            Upload de PDF
-          </h2>
-
-          {/* Zone de drag & drop */}
-          <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 ${
-              isDragging
-                ? 'border-blue-400 bg-blue-50'
-                : 'border-gray-300 hover:border-gray-400'
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <FaUpload className="mx-auto text-4xl text-gray-400 mb-4" />
-            <p className="text-lg text-gray-600 mb-2">
-              Glissez-déposez votre fichier PDF ici
-            </p>
-            <p className="text-sm text-gray-500 mb-4">ou</p>
-            
-            <label className="inline-block bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg cursor-pointer transition-colors duration-200">
-              <FaFilePdf className="inline mr-2" />
-              Choisir un fichier PDF
-              <input
-                type="file"
-                accept=".pdf"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-            </label>
-            
-            <p className="text-xs text-gray-400 mt-4">
-              Taille maximale : 5MB
-            </p>
+          {/* Basculement PDF/Texte */}
+          <div className="flex items-center justify-center mb-6">
+            <div className="flex items-center bg-gray-100 rounded-full p-1">
+              <button
+                onClick={() => setInputMode('pdf')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
+                  inputMode === 'pdf'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <FaFilePdf />
+                PDF
+              </button>
+              <button
+                onClick={() => setInputMode('text')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
+                  inputMode === 'text'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <FaFileAlt />
+                Texte
+              </button>
+            </div>
           </div>
 
-          {/* Fichier sélectionné */}
-          {selectedFile && (
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FaFilePdf className="text-red-500 text-xl" />
-                  <div>
-                    <p className="font-medium text-gray-800">{selectedFile.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                    </p>
+          {inputMode === 'pdf' ? (
+            <>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                <FaFilePdf className="text-red-500" />
+                Upload de PDF
+              </h2>
+
+              {/* Zone de drag & drop */}
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 ${
+                  isDragging
+                    ? 'border-blue-400 bg-blue-50'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <FaUpload className="mx-auto text-4xl text-gray-400 mb-4" />
+                <p className="text-lg text-gray-600 mb-2">
+                  Glissez-déposez votre fichier PDF ici
+                </p>
+                <p className="text-sm text-gray-500 mb-4">ou</p>
+                
+                <label className="inline-block bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg cursor-pointer transition-colors duration-200">
+                  <FaFilePdf className="inline mr-2" />
+                  Choisir un fichier PDF
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </label>
+                
+                <p className="text-xs text-gray-400 mt-4">
+                  Taille maximale : 5MB
+                </p>
+              </div>
+
+              {/* Fichier sélectionné */}
+              {selectedFile && (
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FaFilePdf className="text-red-500 text-xl" />
+                      <div>
+                        <p className="font-medium text-gray-800">{selectedFile.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                      >
+                        {isLoading ? (
+                          <>
+                            <FaSpinner className="animate-spin" />
+                            Traitement...
+                          </>
+                        ) : (
+                          <>
+                            <FaUpload />
+                            Résumer
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={handleReset}
+                        className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                      >
+                        Annuler
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleUpload}
-                    disabled={isLoading}
-                    className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"
-                  >
-                    {isLoading ? (
-                      <>
-                        <FaSpinner className="animate-spin" />
-                        Traitement...
-                      </>
-                    ) : (
-                      <>
-                        <FaUpload />
-                        Résumer
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={handleReset}
-                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-                  >
-                    Annuler
-                  </button>
+              )}
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                <FaFileAlt className="text-blue-500" />
+                Saisie de texte
+              </h2>
+
+              {/* Zone de saisie de texte */}
+              <div className="mb-6">
+                <textarea
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  placeholder="Saisissez votre texte à résumer ici... (minimum 50 caractères)"
+                  className="w-full h-64 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-sm text-gray-500">
+                    {textInput.length} caractères
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Minimum 50 caractères requis
+                  </p>
                 </div>
               </div>
-            </div>
+
+              {/* Boutons d'action */}
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={handleSubmit}
+                  disabled={isLoading || textInput.length < 50}
+                  className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <FaSpinner className="animate-spin" />
+                      Traitement...
+                    </>
+                  ) : (
+                    <>
+                      <FaFileAlt />
+                      Résumer le texte
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors duration-200"
+                >
+                  Effacer
+                </button>
+              </div>
+            </>
           )}
         </div>
 
@@ -290,7 +393,7 @@ export default function Home() {
               <div className="bg-green-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">Texte original</p>
                 <p className="font-semibold text-green-700">
-                  {summary.extracted_text_length.toLocaleString()} caractères
+                  {((summary.extracted_text_length || summary.original_length) || 0).toLocaleString()} caractères
                 </p>
               </div>
               <div className="bg-purple-50 p-4 rounded-lg">
@@ -306,7 +409,7 @@ export default function Home() {
                 </div>
                 <p className="font-semibold text-orange-700">
                   {formatTime(calculateTimeSaved(
-                    summary.extracted_text_length, 
+                    (summary.extracted_text_length || summary.original_length) || 0, 
                     summary.summary_length
                   ).timeSaved)}
                 </p>
@@ -323,7 +426,7 @@ export default function Home() {
                 <div className="text-center">
                   <p className="text-2xl font-bold text-blue-600">
                     {formatTime(calculateTimeSaved(
-                      summary.extracted_text_length, 
+                      (summary.extracted_text_length || summary.original_length) || 0, 
                       summary.summary_length
                     ).originalTime)}
                   </p>
@@ -332,7 +435,7 @@ export default function Home() {
                 <div className="text-center">
                   <p className="text-2xl font-bold text-purple-600">
                     {formatTime(calculateTimeSaved(
-                      summary.extracted_text_length, 
+                      (summary.extracted_text_length || summary.original_length) || 0, 
                       summary.summary_length
                     ).summaryTime)}
                   </p>
@@ -341,7 +444,7 @@ export default function Home() {
                 <div className="text-center">
                   <p className="text-2xl font-bold text-green-600">
                     {calculateTimeSaved(
-                      summary.extracted_text_length, 
+                      (summary.extracted_text_length || summary.original_length) || 0, 
                       summary.summary_length
                     ).compressionRatio.toFixed(1)}%
                   </p>
@@ -363,7 +466,12 @@ export default function Home() {
                   </button>
                 </div>
               </div>
-              <p className="text-gray-700 leading-relaxed">{summary.summary}</p>
+              <div 
+                className="text-gray-700 leading-relaxed"
+                dangerouslySetInnerHTML={{ 
+                  __html: summary.summary.replace(/\n/g, '<br>') 
+                }}
+              />
             </div>
 
             {/* Informations techniques */}

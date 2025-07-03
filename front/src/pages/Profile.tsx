@@ -202,9 +202,12 @@ const Profile = () => {
                                                     {item.resume && (
                                                         <div className="bg-gray-50 rounded-md p-3 mt-3">
                                                             <h5 className="font-medium text-gray-700 mb-2">Résumé :</h5>
-                                                            <p className="text-gray-600 text-sm leading-relaxed">
-                                                                {item.resume}
-                                                            </p>
+                                                            <div 
+                                                                className="text-gray-600 text-sm leading-relaxed"
+                                                                dangerouslySetInnerHTML={{ 
+                                                                    __html: item.resume.replace(/\n/g, '<br>') 
+                                                                }}
+                                                            />
                                                         </div>
                                                     )}
 

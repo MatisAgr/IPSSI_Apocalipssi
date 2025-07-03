@@ -22,7 +22,8 @@ exports.summarizeText = async (req, res, next) => {
         resume: summary,
         metadata: {
           originalTextLength: text.length,
-          summaryLength: summary.length
+          summaryLength: summary.length,
+          type: 'text'
         }
       });
     }
